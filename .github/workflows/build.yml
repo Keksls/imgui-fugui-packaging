@@ -39,6 +39,12 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+          
+      - name: Checkout fuguiBuild branch for submodule cimgui
+        run: |
+            cd cimgui
+            git checkout fuguiBuild
+            git submodule update --init --recursive
 
       - name: Setup .NET
         if: matrix.os == 'windows-latest'
