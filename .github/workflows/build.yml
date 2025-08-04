@@ -48,10 +48,6 @@ jobs:
           git checkout fuguiBuild
         shell: bash
 
-      - name: Make ci-build.sh executable
-        run: chmod +x ./ci-build.sh
-        shell: bash
-
       - name: Setup .NET
         if: matrix.os == 'windows-latest'
         uses: actions/setup-dotnet@v4
