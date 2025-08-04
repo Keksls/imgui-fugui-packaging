@@ -39,6 +39,20 @@ jobs:
           fetch-depth: 0
           submodules: false
 
+      - name: Move repo to shorter path
+        run: |
+          mkdir -p short
+          cp -r * .git short/
+          cd short
+          git config --global --add safe.directory "$PWD"
+          git submodule update --init cimgui
+          cd cimgui
+          git checkout fuguiBuild
+          git submodule update --init imgui
+          cd imgui
+          git checkout fuguiBuild
+        shell: bash
+
       - name: Checkout and init submodules manually
         run: |
           git submodule update --init cimgui
