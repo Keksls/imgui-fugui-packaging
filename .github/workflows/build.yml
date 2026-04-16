@@ -160,8 +160,8 @@ jobs:
       - name: Create cimgui XCFramework
         run: |
           xcodebuild -create-xcframework \
-            -library cimgui/build/ios/device/${{ github.event.inputs.ReleaseType || 'Release' }}/libcimgui.a -headers cimgui/build/ios/headers \
-            -library cimgui/build/ios/simulator/${{ github.event.inputs.ReleaseType || 'Release' }}/libcimgui.a -headers cimgui/build/ios/headers \
+            -library cimgui/build/ios/device/${{ github.event.inputs.ReleaseType || 'Release' }}/cimgui.a -headers cimgui/build/ios/headers \
+            -library cimgui/build/ios/simulator/${{ github.event.inputs.ReleaseType || 'Release' }}/cimgui.a -headers cimgui/build/ios/headers \
             -output cimgui/build/ios/cimgui.xcframework
         shell: bash
 
@@ -170,6 +170,48 @@ jobs:
         with:
           name: ios-xcframework
           path: cimgui/build/ios/cimgui.xcframework
+
+  Build-Android:
+    runs-on: ubuntu-latest
+    name: Build - Android
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Init submodules and checkout fuguiBuild
+        run: |
+          git submodule update --init cimgui
+          cd cimgui
+          git checkout fuguiBuild
+          git submodule update --init imgui
+          cd imgui
+          git checkout fuguiBuild
+        shell: bash
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+
+      - name: Build Android arm64-v8a
+        run: |
+          ./ci-build.sh ${{ github.event.inputs.ReleaseType || 'Release' }} \
+            -android \
+            -android-ndk "$ANDROID_NDK_ROOT" \
+            -android-abi arm64-v8a \
+            -android-api 24 \
+            -build-subdir android/arm64-v8a
+        shell: bash
+
+      - name: Upload Android arm64-v8a
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-arm64-v8a
+          path: cimgui/build/android/arm64-v8a/${{ github.event.inputs.ReleaseType || 'Release' }}/cimgui.so
 
   CreateReleaseOnTagCreate:
     runs-on: ubuntu-latest
@@ -204,7 +246,7 @@ jobs:
 
   BundleAll:
     runs-on: ubuntu-latest
-    needs: [Build, Build-iOS]
+    needs: [Build, Build-iOS, Build-Android]
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4

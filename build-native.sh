@@ -10,6 +10,9 @@ _CMakeOsxArchitectures=
 _CMakeSystemName=
 _CMakeOsxSysroot=
 _CMakeDeploymentTarget=
+_CMakeAndroidNdk=
+_CMakeAndroidAbi=
+_CMakeAndroidApi=
 _BuildSubdir=
 __UnprocessedBuildArgs=
 
@@ -39,6 +42,21 @@ while :; do
             ;;
         -ios-deployment-target)
             _CMakeDeploymentTarget=$2
+            shift
+            ;;
+        -android)
+            _CMakeSystemName=Android
+            ;;
+        -android-ndk)
+            _CMakeAndroidNdk=$2
+            shift
+            ;;
+        -android-abi)
+            _CMakeAndroidAbi=$2
+            shift
+            ;;
+        -android-api)
+            _CMakeAndroidApi=$2
             shift
             ;;
         -build-subdir)
@@ -81,8 +99,14 @@ if [ -n "$_CMakeDeploymentTarget" ]; then
     CMAKE_ARGS+=("-DCMAKE_OSX_DEPLOYMENT_TARGET=$_CMakeDeploymentTarget")
 elif [[ "$_CMakeSystemName" == "iOS" ]]; then
     CMAKE_ARGS+=("-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0")
-else
+elif [[ "$_CMakeSystemName" != "Android" ]]; then
     CMAKE_ARGS+=("-DCMAKE_OSX_DEPLOYMENT_TARGET=10.13")
+fi
+
+if [[ "$_CMakeSystemName" == "Android" ]]; then
+    CMAKE_ARGS+=("-DCMAKE_ANDROID_NDK=$_CMakeAndroidNdk")
+    CMAKE_ARGS+=("-DCMAKE_ANDROID_ARCH_ABI=$_CMakeAndroidAbi")
+    CMAKE_ARGS+=("-DCMAKE_ANDROID_API=$_CMakeAndroidApi")
 fi
 
 if [ -n "$__UnprocessedBuildArgs" ]; then
@@ -92,6 +116,6 @@ if [ -n "$__UnprocessedBuildArgs" ]; then
 fi
 
 cmake "${CMAKE_ARGS[@]}"
-make
+cmake --build . --config "$_CMakeBuildType"
 
 popd

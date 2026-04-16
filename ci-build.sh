@@ -2,7 +2,7 @@
 
 set -e
 
-scriptPath="`dirname \"$0\"`"
+scriptPath="$(cd "$(dirname "$0")" && pwd)"
 RTYPE="${1:-Release}"
 shift || true
 
