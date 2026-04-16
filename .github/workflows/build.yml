@@ -127,77 +127,47 @@ jobs:
           git checkout fuguiBuild
         shell: bash
 
-      - name: Build cimgui for iPhoneOS
-        shell: bash
+      - name: Build iPhoneOS
         run: |
-          set -e
-          mkdir -p cimgui/build/ios/device
-
-          COMMON_FLAGS="-std=c++17 -fPIC -I cimgui -I cimgui/imgui -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=0"
-          SDK_PATH="$(xcrun --sdk iphoneos --show-sdk-path)"
-
-          xcrun --sdk iphoneos clang++ -arch arm64 -isysroot "$SDK_PATH" -miphoneos-version-min=13.0 -c cimgui/cimgui.cpp $COMMON_FLAGS -o cimgui/build/ios/device/cimgui.o
-          xcrun --sdk iphoneos clang++ -arch arm64 -isysroot "$SDK_PATH" -miphoneos-version-min=13.0 -c cimgui/imgui/imgui.cpp $COMMON_FLAGS -o cimgui/build/ios/device/imgui.o
-          xcrun --sdk iphoneos clang++ -arch arm64 -isysroot "$SDK_PATH" -miphoneos-version-min=13.0 -c cimgui/imgui/imgui_draw.cpp $COMMON_FLAGS -o cimgui/build/ios/device/imgui_draw.o
-          xcrun --sdk iphoneos clang++ -arch arm64 -isysroot "$SDK_PATH" -miphoneos-version-min=13.0 -c cimgui/imgui/imgui_tables.cpp $COMMON_FLAGS -o cimgui/build/ios/device/imgui_tables.o
-          xcrun --sdk iphoneos clang++ -arch arm64 -isysroot "$SDK_PATH" -miphoneos-version-min=13.0 -c cimgui/imgui/imgui_widgets.cpp $COMMON_FLAGS -o cimgui/build/ios/device/imgui_widgets.o
-
-          libtool -static -o cimgui/build/ios/device/libcimgui.a \
-            cimgui/build/ios/device/cimgui.o \
-            cimgui/build/ios/device/imgui.o \
-            cimgui/build/ios/device/imgui_draw.o \
-            cimgui/build/ios/device/imgui_tables.o \
-            cimgui/build/ios/device/imgui_widgets.o
-
-      - name: Build cimgui for iPhoneSimulator
+          ./ci-build.sh ${{ github.event.inputs.ReleaseType || 'Release' }} \
+            -ios \
+            -ios-platform iphoneos \
+            -ios-deployment-target 13.0 \
+            -build-subdir ios/device
         shell: bash
+
+      - name: Build iPhoneSimulator
         run: |
-          set -e
-          mkdir -p cimgui/build/ios/simulator
-
-          COMMON_FLAGS="-std=c++17 -fPIC -I cimgui -I cimgui/imgui -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=0"
-          SDK_PATH="$(xcrun --sdk iphonesimulator --show-sdk-path)"
-
-          xcrun --sdk iphonesimulator clang++ -arch arm64 -isysroot "$SDK_PATH" -mios-simulator-version-min=13.0 -c cimgui/cimgui.cpp $COMMON_FLAGS -o cimgui/build/ios/simulator/cimgui.o
-          xcrun --sdk iphonesimulator clang++ -arch arm64 -isysroot "$SDK_PATH" -mios-simulator-version-min=13.0 -c cimgui/imgui/imgui.cpp $COMMON_FLAGS -o cimgui/build/ios/simulator/imgui.o
-          xcrun --sdk iphonesimulator clang++ -arch arm64 -isysroot "$SDK_PATH" -mios-simulator-version-min=13.0 -c cimgui/imgui/imgui_draw.cpp $COMMON_FLAGS -o cimgui/build/ios/simulator/imgui_draw.o
-          xcrun --sdk iphonesimulator clang++ -arch arm64 -isysroot "$SDK_PATH" -mios-simulator-version-min=13.0 -c cimgui/imgui/imgui_tables.cpp $COMMON_FLAGS -o cimgui/build/ios/simulator/imgui_tables.o
-          xcrun --sdk iphonesimulator clang++ -arch arm64 -isysroot "$SDK_PATH" -mios-simulator-version-min=13.0 -c cimgui/imgui/imgui_widgets.cpp $COMMON_FLAGS -o cimgui/build/ios/simulator/imgui_widgets.o
-
-          libtool -static -o cimgui/build/ios/simulator/libcimgui.a \
-            cimgui/build/ios/simulator/cimgui.o \
-            cimgui/build/ios/simulator/imgui.o \
-            cimgui/build/ios/simulator/imgui_draw.o \
-            cimgui/build/ios/simulator/imgui_tables.o \
-            cimgui/build/ios/simulator/imgui_widgets.o
+          ./ci-build.sh ${{ github.event.inputs.ReleaseType || 'Release' }} \
+            -ios \
+            -ios-platform iphonesimulator \
+            -ios-deployment-target 13.0 \
+            -build-subdir ios/simulator
+        shell: bash
 
       - name: Prepare iOS headers
-        shell: bash
         run: |
-          set -e
           mkdir -p cimgui/build/ios/headers
           cp cimgui/cimgui.h cimgui/build/ios/headers/
           cp cimgui/cimgui_impl.h cimgui/build/ios/headers/
           cp cimgui/imgui/imgui.h cimgui/build/ios/headers/
           cp cimgui/imgui/imgui_internal.h cimgui/build/ios/headers/
           cp cimgui/imgui/imconfig.h cimgui/build/ios/headers/
+        shell: bash
 
       - name: Create cimgui XCFramework
-        shell: bash
         run: |
-          set -e
-          mkdir -p cimgui/build/ios/artifacts
-
           xcodebuild -create-xcframework \
-            -library cimgui/build/ios/device/libcimgui.a -headers cimgui/build/ios/headers \
-            -library cimgui/build/ios/simulator/libcimgui.a -headers cimgui/build/ios/headers \
-            -output cimgui/build/ios/artifacts/cimgui.xcframework
+            -library cimgui/build/ios/device/${{ github.event.inputs.ReleaseType || 'Release' }}/libcimgui.a -headers cimgui/build/ios/headers \
+            -library cimgui/build/ios/simulator/${{ github.event.inputs.ReleaseType || 'Release' }}/libcimgui.a -headers cimgui/build/ios/headers \
+            -output cimgui/build/ios/cimgui.xcframework
+        shell: bash
 
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-xcframework
-          path: cimgui/build/ios/artifacts/cimgui.xcframework
+          path: cimgui/build/ios/cimgui.xcframework
 
   CreateReleaseOnTagCreate:
     runs-on: ubuntu-latest
