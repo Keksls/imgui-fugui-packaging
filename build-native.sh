@@ -2,8 +2,8 @@
 
 set -e
 
-scriptPath="`dirname \"$0\"`"
-cimguiPath=$scriptPath/cimgui
+scriptPath="$(cd "$(dirname "$0")" && pwd)"
+cimguiPath="$scriptPath/cimgui"
 
 _CMakeBuildType=Debug
 _CMakeOsxArchitectures=
@@ -62,7 +62,7 @@ fi
 mkdir -p "$buildDir"
 pushd "$buildDir"
 
-CMAKE_ARGS=("../..")
+CMAKE_ARGS=("$cimguiPath")
 CMAKE_ARGS+=("-DCMAKE_BUILD_TYPE=$_CMakeBuildType")
 
 if [ -n "$_CMakeOsxArchitectures" ]; then
