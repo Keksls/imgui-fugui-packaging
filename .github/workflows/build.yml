@@ -133,7 +133,8 @@ jobs:
             -ios \
             -ios-platform iphoneos \
             -ios-deployment-target 13.0 \
-            -build-subdir ios/device
+            -build-subdir ios/device\
+            -DIMGUI_STATIC=yes
         shell: bash
 
       - name: Build iPhoneSimulator
@@ -142,7 +143,8 @@ jobs:
             -ios \
             -ios-platform iphonesimulator \
             -ios-deployment-target 13.0 \
-            -build-subdir ios/simulator
+            -build-subdir ios/simulator \
+            -DIMGUI_STATIC=yes
         shell: bash
 
       - name: Prepare iOS headers
