@@ -264,7 +264,17 @@ jobs:
           cp all-artifacts/macos-latest-x64/cimgui.dylib "$ROOT/macOS/cimgui.dylib"
           cp all-artifacts/android-arm64-v8a/cimgui.so "$ROOT/Android/arm64-v8a/cimgui.so"
 
-          cp -R all-artifacts/ios-xcframework/cimgui.xcframework "$ROOT/iOS/cimgui.xcframework"
+          echo "=== all-artifacts tree ==="
+          find all-artifacts -maxdepth 3 -type d | sort
+          echo "=== iOS artifact contents ==="
+          find all-artifacts/ios-xcframework -maxdepth 3 | sort || true
+
+          if [ -d all-artifacts/ios-xcframework/cimgui.xcframework ]; then
+            cp -R all-artifacts/ios-xcframework/cimgui.xcframework "$ROOT/iOS/cimgui.xcframework"
+          else
+            mkdir -p "$ROOT/iOS/cimgui.xcframework"
+            cp -R all-artifacts/ios-xcframework/. "$ROOT/iOS/cimgui.xcframework/"
+          fi
 
       - name: Add optional extra artifacts
         shell: bash
