@@ -111,7 +111,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-          
+
       - name: Init submodules
         run: |
           git submodule update --init --recursive
@@ -123,7 +123,7 @@ jobs:
             -ios \
             -ios-platform iphoneos \
             -ios-deployment-target 13.0 \
-            -build-subdir ios/device\
+            -build-subdir ios/device \
             -DIMGUI_STATIC=yes
         shell: bash
 
@@ -141,10 +141,13 @@ jobs:
         run: |
           mkdir -p cimgui/build/ios/headers
           cp cimgui/cimgui.h cimgui/build/ios/headers/
-          cp cimgui/cimgui_impl.h cimgui/build/ios/headers/
           cp cimgui/imgui/imgui.h cimgui/build/ios/headers/
           cp cimgui/imgui/imgui_internal.h cimgui/build/ios/headers/
           cp cimgui/imgui/imconfig.h cimgui/build/ios/headers/
+
+          if [ -f cimgui/cimgui_impl.h ]; then
+            cp cimgui/cimgui_impl.h cimgui/build/ios/headers/
+          fi
         shell: bash
 
       - name: Create cimgui XCFramework
@@ -171,7 +174,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-          
+
       - name: Init submodules
         run: |
           git submodule update --init --recursive
@@ -238,11 +241,86 @@ jobs:
         with:
           path: all-artifacts
 
-      - name: Zip all builds
+      - name: Build Unity plugin package structure
+        shell: bash
         run: |
-          zip -r all-builds.zip all-artifacts
+          set -e
 
-      - name: Upload zip of all builds
+          ROOT="unity-plugin-package/Assets/Plugins/cimgui"
+
+          mkdir -p "$ROOT/Windows/x86_64"
+          mkdir -p "$ROOT/Windows/x86"
+          mkdir -p "$ROOT/Windows/ARM64"
+          mkdir -p "$ROOT/Linux/x86_64"
+          mkdir -p "$ROOT/macOS"
+          mkdir -p "$ROOT/Android/arm64-v8a"
+          mkdir -p "$ROOT/iOS"
+
+          cp all-artifacts/win-x64/cimgui.dll "$ROOT/Windows/x86_64/cimgui.dll"
+          cp all-artifacts/win-x86/cimgui.dll "$ROOT/Windows/x86/cimgui.dll"
+          cp all-artifacts/win-ARM64/cimgui.dll "$ROOT/Windows/ARM64/cimgui.dll"
+
+          cp all-artifacts/ubuntu-latest-x64/cimgui.so "$ROOT/Linux/x86_64/cimgui.so"
+          cp all-artifacts/macos-latest-x64/cimgui.dylib "$ROOT/macOS/cimgui.dylib"
+          cp all-artifacts/android-arm64-v8a/cimgui.so "$ROOT/Android/arm64-v8a/cimgui.so"
+
+          cp -R all-artifacts/ios-xcframework/cimgui.xcframework "$ROOT/iOS/cimgui.xcframework"
+
+      - name: Add optional extra artifacts
+        shell: bash
+        run: |
+          set -e
+
+          mkdir -p unity-plugin-package/Extras/JsonFiles
+          mkdir -p unity-plugin-package/Extras/NuGet
+
+          if [ -d all-artifacts/JsonFiles ]; then
+            cp -R all-artifacts/JsonFiles/. unity-plugin-package/Extras/JsonFiles/
+          fi
+
+          if [ -d all-artifacts/win-x64-source ]; then
+            cp -R all-artifacts/win-x64-source/. unity-plugin-package/Extras/NuGet/
+          fi
+
+      - name: Write package info
+        shell: bash
+        run: |
+          cat > unity-plugin-package/README.txt << 'EOF'
+          Unity plugin layout:
+
+          Assets/Plugins/cimgui/
+            Windows/x86_64/cimgui.dll
+            Windows/x86/cimgui.dll
+            Windows/ARM64/cimgui.dll
+            Linux/x86_64/cimgui.so
+            macOS/cimgui.dylib
+            Android/arm64-v8a/cimgui.so
+            iOS/cimgui.xcframework
+
+          Extras/
+            JsonFiles/
+            NuGet/
+          EOF
+
+      - name: Zip Unity plugin package
+        shell: bash
+        run: |
+          cd unity-plugin-package
+          zip -r ../cimgui-unity-plugins.zip .
+
+      - name: Zip all raw artifacts
+        shell: bash
+        run: |
+          cd all-artifacts
+          zip -r ../all-builds.zip .
+
+      - name: Upload Unity plugin zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: cimgui-unity-plugins
+          path: cimgui-unity-plugins.zip
+
+      - name: Upload zip of all raw builds
         uses: actions/upload-artifact@v4
         with:
           name: all-builds-zip
