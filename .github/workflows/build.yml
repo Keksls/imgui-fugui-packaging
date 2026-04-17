@@ -111,15 +111,10 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-
-      - name: Init submodules and checkout fuguiBuild
+          
+      - name: Init submodules
         run: |
-          git submodule update --init cimgui
-          cd cimgui
-          git checkout fuguiBuild
-          git submodule update --init imgui
-          cd imgui
-          git checkout fuguiBuild
+          git submodule update --init --recursive
         shell: bash
 
       - name: Build iPhoneOS
@@ -176,15 +171,10 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-
-      - name: Init submodules and checkout fuguiBuild
+          
+      - name: Init submodules
         run: |
-          git submodule update --init cimgui
-          cd cimgui
-          git checkout fuguiBuild
-          git submodule update --init imgui
-          cd imgui
-          git checkout fuguiBuild
+          git submodule update --init --recursive
         shell: bash
 
       - name: Setup Android NDK
